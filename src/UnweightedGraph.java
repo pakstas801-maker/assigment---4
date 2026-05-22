@@ -2,7 +2,9 @@ import java.util.*;
 
 public class UnweightedGraph<V> {
     private final boolean undirected;
-    private final Map<V, List<V>> map = new HashMap<>();
+
+
+    private final Map<V, Vertex<V>> map = new HashMap<>();
 
     public UnweightedGraph() {
         this(true);
@@ -16,7 +18,7 @@ public class UnweightedGraph<V> {
         if (hasVertex(v))
             return;
 
-        map.put(v, new LinkedList<>());
+        map.put(v, new Vertex<>(v));
     }
 
     public void addEdge(V source, V dest) {
@@ -26,14 +28,18 @@ public class UnweightedGraph<V> {
         if (!hasVertex(dest))
             addVertex(dest);
 
-        if (hasEdge(source, dest)
-                || source.equals(dest))
+        if (hasEdge(source, dest) || source.equals(dest))
             return;
 
-        map.get(source).add(dest);
+        Vertex<V> sourceVertex = map.get(source);
+        Vertex<V> destVertex = map.get(dest);
 
-        if (undirected)
-            map.get(dest).add(source);
+
+        sourceVertex.addAdjacentVertex(destVertex, 1.0);
+
+        if (undirected) {
+            destVertex.addAdjacentVertex(sourceVertex, 1.0);
+        }
     }
 
     public int getVerticesCount() {
@@ -42,8 +48,8 @@ public class UnweightedGraph<V> {
 
     public int getEdgesCount() {
         int count = 0;
-        for (V v : map.keySet()) {
-            count += map.get(v).size();
+        for (Vertex<V> vertex : map.values()) {
+            count += vertex.getAdjacentVertices().size();
         }
 
         if (undirected)
@@ -52,20 +58,31 @@ public class UnweightedGraph<V> {
         return count;
     }
 
-
     public boolean hasVertex(V v) {
         return map.containsKey(v);
     }
 
     public boolean hasEdge(V source, V dest) {
-        if (!hasVertex(source)) return false;
-        return map.get(source).contains(dest);
+        if (!hasVertex(source) || !hasVertex(dest)) return false;
+
+        Vertex<V> sourceVertex = map.get(source);
+        Vertex<V> destVertex = map.get(dest);
+
+        return sourceVertex.getAdjacentVertices().containsKey(destVertex);
     }
+
 
     public List<V> adjacencyList(V v) {
         if (!hasVertex(v)) return null;
 
-        return map.get(v);
+        List<V> neighbors = new ArrayList<>();
+        Vertex<V> vertex = map.get(v);
+
+        for (Vertex<V> neighbor : vertex.getAdjacentVertices().keySet()) {
+            neighbors.add(neighbor.getData());
+        }
+
+        return neighbors;
     }
 }
 
